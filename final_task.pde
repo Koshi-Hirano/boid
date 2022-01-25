@@ -24,6 +24,7 @@ class Boint {
   PVector v1 = new PVector(0, 0, 0);
   PVector v2 = new PVector(0, 0, 0);
   PVector v3 = new PVector(0, 0, 0);
+  PVector v4 = new PVector(0, 0, 0);
   
   Boint(PVector position, PVector velocity, int identity, color co){
     pos = new  PVector(position.x, position.y, position.z);
@@ -34,9 +35,9 @@ class Boint {
   
   void Update(){
     int MAX_SPEED = 4;
-    v.x += 0.001 * v1.x + 0.8 * v2.x + 0.1 * v3.x;
-    v.y += 0.001 * v1.y + 0.8 * v2.y + 0.1 * v3.y;
-    v.z += 0.001 * v1.z + 0.8 * v2.z + 0.1 * v3.z;
+    v.x += 0.003 * v1.x + 0.5 * v2.x + 0.1 * v3.x + 0.003 * v4.x;
+    v.y += 0.003 * v1.y + 0.5 * v2.y + 0.1 * v3.y + 0.003 * v4.y;
+    v.z += 0.003 * v1.z + 0.5 * v2.z + 0.1 * v3.z + 0.003 * v4.z;
     
     float movement = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
     if(movement > MAX_SPEED){
@@ -71,14 +72,17 @@ class Boint {
     }
   }
   
-  void Draw(ArrayList<Boint> boids){
+  void Draw(ArrayList<Boint> boids, ArrayList<Boint> boids1, ArrayList<Boint> boids2){
     v1.set(0, 0, 0);
     v2.set(0, 0, 0);
     v3.set(0, 0, 0);
+    v4.set(0, 0, 0);
     
     GetToCenterVector(boids);
     GetAvoidanceVector(boids);
     GetAverageVelocityVector(boids);
+    GetAvoidanceGroupVector(boids1, boids2);
+    
     Update();
     //描画
     pushMatrix();
@@ -146,6 +150,41 @@ class Boint {
     v3.y = avgV.y - v.y;
     v3.z = avgV.z - v.z;
   }
+  
+  void GetAvoidanceGroupVector(ArrayList<Boint> boids1, ArrayList<Boint> boids2){
+    PVector avgV1 = new PVector(0, 0, 0);
+    PVector avgV2 = new PVector(0, 0, 0);
+    
+    for(int i = 0; i < num; i++){
+      Boint boint = boids1.get(i);
+      avgV1.x += boint.v.x;
+      avgV1.y += boint.v.y;
+      avgV1.z += boint.v.z;
+    }
+    
+    avgV1.x /= num - 1;
+    avgV1.y /= num - 1;
+    avgV1.z /= num - 1;
+    
+    v4.x = 1/(v.x - avgV1.x + 1);
+    v4.y = 1/(v.y - avgV1.y + 1);
+    v4.z = 1/(v.z - avgV1.z + 1);
+    
+    for(int i = 0; i < num; i++){
+      Boint boint = boids2.get(i);
+      avgV2.x += boint.v.x;
+      avgV2.y += boint.v.y;
+      avgV2.z += boint.v.z;
+    }
+    
+    avgV2.x /= num - 1;
+    avgV2.y /= num - 1;
+    avgV2.z /= num - 1;
+    
+    v4.x += 1/(v.x - avgV2.x + 1);
+    v4.y += 1/(v.y - avgV2.y + 1);
+    v4.z += 1/(v.z - avgV2.z + 1);
+  }
 }
 
 ArrayList<Boint> boids_blue = new ArrayList<Boint>();
@@ -195,15 +234,15 @@ void draw(){
   
   for(int i = 0; i < num; i++){
     Boint boint = boids_blue.get(i);
-    boint.Draw(boids_blue);
+    boint.Draw(boids_blue, boids_yellow, boids_green);
   }
   for(int i = 0; i < num; i++){
     Boint boint = boids_yellow.get(i);
-    boint.Draw(boids_yellow);
+    boint.Draw(boids_yellow, boids_blue, boids_green);
   }
   for(int i = 0; i < num; i++){
     Boint boint = boids_green.get(i);
-    boint.Draw(boids_green);
+    boint.Draw(boids_green, boids_blue, boids_yellow);
   }
   
   //カメラ
